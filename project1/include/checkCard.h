@@ -7,12 +7,11 @@ using namespace cv;
 using namespace std;
 class Check {//用来检测银行卡图片的类
 public:
-	Mat erzhihua(Mat& image);//二值化
-	void findcardnum(Mat& image, vector<Mat>&cardNumber , vector<Rect>&Re);
-	void findmoban(Mat& image, vector<Mat>&mubiao);
-	void tezheng(Mat& img1, Mat& img2);
-	vector<int> acgHash(Mat& image);
+	Mat imageChuli(Mat& image);
+	void FindCardRoi(Mat& image, vector<Mat>&cardNumber , vector<Rect>&Re);
+	void FindMoban(Mat& image, vector<Mat>&mubiao);
+	vector<int> avghash(Mat& image);
 	int xiangsidu(vector<int> &has1, vector<int>&has2);
 	vector< vector<int>> mobanHash(vector<Mat>&mubiao);
-
+	void result(Mat& image, vector<Mat>& cardNumber, vector<Rect>& Re, vector< vector<int>>&mbHash);
 };
