@@ -25,12 +25,12 @@ int main() {
 
 	for (int i = 0; i < 5; i++) {
 		vector<Mat> cardNumber;
-		vector<int>hash1;
-		vector<int>hash2;
 		vector<Rect>Re;
 		demo.FindCardRoi(super[i], cardNumber, Re);//将银行卡中符合的图像分割挑出来，将矩形信息记录
 		demo.result(super[i], cardNumber, Re, mbHash);//进行最后的哈希表比较，并且最高契合度的直接写在图像上。
 		string str ="card_"+ to_string(i + 1);//显示
+		string path = "result/" + str + ".png";
+		imwrite(path, super[i]);//保存
 		imshow(str, super[i]);
 	}
 	waitKey(0);

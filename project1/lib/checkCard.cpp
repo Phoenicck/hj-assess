@@ -5,7 +5,6 @@
 using namespace cv;
 using namespace std;
 
-
 Mat Check::imageChuli(Mat& image) {//图像预处理
 	Mat imgGray,imgThre,imgBi,imgdilate;
 	cvtColor(image, imgGray, COLOR_BGR2GRAY);//转为灰度
