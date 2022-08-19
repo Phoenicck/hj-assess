@@ -3,19 +3,26 @@
 #include<vector>
 #include<string>
 #include<shoot.h>
+#include<math.h>
 using namespace std;
 using namespace cv;
 
+float CameraJuzhen[3][3] = { 1576.70020,  0.000000000000,  635.46084,  0.000000000000,  1575.77707,  529.83878,  0.000000000000,  0.000000000000,  1.000000000000 };
+Mat CameraMatrix = Mat(3, 3, CV_32FC1, CameraJuzhen);//相机内置矩阵
+float JIbianJUzhen[1][5] = { -0.08325,  0.21277,  0.00022,  0.00033,  0 };
+Mat JibianMatrix = Mat(1, 5, CV_32FC1, JIbianJUzhen);//畸变参数
+
+
 // 绘制旋转矩形 
 
-void Drawrotedrec(Mat&src, RotatedRect& rotatedrect, const Scalar& color, int thickness)
+void CheckJiaban::Drawrotedrec(Mat&src, RotatedRect& rotatedrect, const Scalar& color, int thickness)
 {
 	// 提取旋转矩形的四个角点
 	Point2f points[4];
 	rotatedrect.points(points);
 
 	// 构建轮廓
-	vector<vector<Point>> Contours;    
+	vector<vector<Point>>Contours;    
 	vector<Point> contours;
 	for (int i = 0; i != 4; ++i) {
 		contours.push_back(Point2i(points[i]));
@@ -24,20 +31,26 @@ void Drawrotedrec(Mat&src, RotatedRect& rotatedrect, const Scalar& color, int th
 	// 绘制轮廓，即旋转矩形
 	drawContours(src, Contours, 0, color, thickness);//利用四个点画出来
 }
+//求两点距离的函数
+float distance(const cv::Point2f& a, const cv::Point2f& b)
+{
+	float res = sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2));
+	return res;
+}
+
+
 //将图片进行矫正
 Mat CheckJiaban::jiaozheng(Mat& image) {
-	Mat CameraMatrix, newCameraMatrix, JibianMatrix;
-	float CameraJuzhen[3][3] = {1576.70020,  0.000000000000,  635.46084,  0.000000000000,  1575.77707,  529.83878,  0.000000000000,  0.000000000000,  1.000000000000};
-	CameraMatrix = Mat(3, 3, CV_32FC1,CameraJuzhen);//相机内置矩阵
-	float JIbianJUzhen[1][5] = { -0.08325,  0.21277,  0.00022,  0.00033,  0 };
-	JibianMatrix = Mat(1, 5, CV_32FC1, JIbianJUzhen);//畸变参数
-	newCameraMatrix = Mat(3, 3, CV_32FC1);
+	//方案一
+	// Mat newCameraMatrix = Mat(3, 3, CV_32FC1);
 	/*Mat map1;
 	Mat map2;*/
-	Mat dst;
+	
 	/*initUndistortRectifyMap(CameraMatrix, JibianMatrix, newCameraMatrix,Size(1280,1024), CV_32FC1,map1,map2);
 	remap(image, dst, map1, map2, INTER_LINEAR);*///旋转矩阵R未知
 
+	//方案二
+	Mat dst;
 	undistort(image, dst, CameraMatrix, JibianMatrix);//进行矫正
 	return dst;
 	//imshow("jiaozhen", dst);
@@ -63,7 +76,7 @@ Mat CheckJiaban::chuli(Mat& image) {
 	dilate(imgThre, imgDil, kernel2);//进行膨胀
 	//Mat kernel1 = getStructuringElement(MORPH_RECT, Size(3, 3));
 	//morphologyEx(imgDil, imgBi, MORPH_TOPHAT, kernel1);//去除杂带点
-	//imshow("red", imgRed);
+	//imshow("red", imgRed);//仅仅为了调试可以显示
 	//namedWindow("thre", 0);
 	imshow("thre", imgDil);
 	return imgDil;
@@ -97,17 +110,17 @@ vector<RotatedRect> CheckJiaban::findLight(Mat& image,Mat&src) {
 		double bili1 = h/w;//这是应为它的长宽提取是有顺序，所以长宽比与宽长比是有共通性的
 		double bili2 = w/h;
 		if (bili1 >2.5||bili2>2.5) {//
-			//DrawRotatedRect(src, minrec[i], Scalar(0, 0, 255), 1, 8);
+			Drawrotedrec(src, minrec[i], Scalar(0, 0, 255),1);
 			//(src, minrec[i], Scalar(0, 0, 255));
 			Minrec.push_back(minrec[i]);//满足条件的矩形放入
 		}
 	}
-	imshow("dad", src);
+	imshow("dad", src);//调试用的
 	return Minrec;	
 }
 
 //将甲板的矩形找出
-void CheckJiaban::findJiban(vector<RotatedRect>& light,Mat&src) {
+vector<vec2RotatedRect> CheckJiaban::findJiban(vector<RotatedRect>& light,Mat&src) {
 	Mat result = src.clone();
 	if (light.size() == 0) {
 		cout << "无法识别甲板" << endl;
@@ -134,47 +147,92 @@ void CheckJiaban::findJiban(vector<RotatedRect>& light,Mat&src) {
 	//}
 
 	vector<double>area;
+	vector<vector<Point2i>> heti(mubiao.size());
+	vector<RotatedRect>roatedrects(mubiao.size());
 	for (int i = 0; i < mubiao.size(); i++) {
 
-		vector<Point2i > heti;
+		
 		Point2f ps1[4];//将8个点合体
 
 		//先是4个
 		mubiao[i].arr[0].points(ps1);
 		for (int j = 0; j < 4; j++) {
-			heti.push_back(ps1[j]);
+			heti[i].push_back(ps1[j]);
 		}
 		Point2f ps2[4];
 		mubiao[i].arr[1].points(ps2);
 		for (int j = 0; j < 4; j++) {
-			heti.push_back(ps2[j]);
+			heti[i].push_back(ps2[j]);
 		}
 		
-		RotatedRect re = minAreaRect(heti);
-		Drawrotedrec(src, re, Scalar(0, 255, 0),2);
-		double area_temp = re.size.width*re.size.height;
-		area.push_back(area_temp);
+		roatedrects[i] = minAreaRect(heti[i]);//对已经匹配成功的灯条画出他们的矩形
+		Drawrotedrec(src, roatedrects[i], Scalar(0, 255, 0),2);//画出已检测的甲板
+		double area_temp = roatedrects[i].size.width* roatedrects[i].size.height;
+		area.push_back(area_temp);//因为把面积作为比较的因素，把面积储存
 	}
 	int maxPosition = max_element(area.begin(), area.end()) - area.begin();
-	//先复制一份看看能不能找到最大，之后再改
-	vector<Point2i > heti;
-	Point2f ps1[4];//将8个点合体
+	//面积最大的装甲板被检测到
+	Drawrotedrec(result, roatedrects[maxPosition], Scalar(0, 0, 255), 2);//画出目标矩形
+	imshow("allJiaban", src);//这两个显示为了将不同的区分开来
+	imshow("result", result);
+	return mubiao;
+};
 
-	//先是4个
-	mubiao[maxPosition].arr[0].points(ps1);
-	for (int j = 0; j < 4; j++) {
-		heti.push_back(ps1[j]);
-	}
-	Point2f ps2[4];
-	mubiao[maxPosition].arr[1].points(ps2);
-	for (int j = 0; j < 4; j++) {
-		heti.push_back(ps2[j]);
+void CheckJiaban::zuobiao(RotatedRect& light) {//应该选择已经匹配成功的一个灯条作为相机坐标转为世界坐标的模板，要不然，可能不是灯条
+	//主要是对灯条的四个点作为检测，这样就不用角点检测，
+	//用灯条的尺寸作为转为世界坐标的依据
+	Point2f ps[4];
+	vector<Point2f>Ps;//这个为了pnp测距的时候用的，跟ps一样的
+	light.points(ps);//将四个点取下
+	Point2f pmin=ps[0];//找到最高的点
+	float maxDistance = 0;
+	//找到最高的点，和最长的边
+	for (int i = 0; i < 4; i++) {
+		Ps.push_back(ps[i]);
+		if (ps[i].y < pmin.y) {
+			pmin = ps[i];
+		}
+		cout << ps[i] << endl;//仅仅为了显示选择的点是否正确
+		int j = i + 1;
+		if (j == 4) {
+			break;
+		}
+		else {
+			float temp = distance(ps[i], ps[j]);
+			if (temp > maxDistance) {
+				maxDistance = temp;
+			}
+
+		}
 	}
 	
-	RotatedRect re = minAreaRect(heti);
-	Drawrotedrec(src, re, Scalar(0,0, 255), 2);
-	double area_temp = re.size.width * re.size.height;
+	cout <<"max is: " << pmin << endl;//仅仅为了显示选择的点是否正确
+	Point2f newPs[4];//找到世界坐标
+	float biliChi =14/maxDistance;//像素距离与实际的比例尺
+	for (int i = 0; i < 4; i++) {
+		newPs[i] = (ps[i] - pmin)*biliChi;//将最高的点作为原点，之后再按比例转换
+		cout << newPs[i] << endl;//仅仅为了显示选择的点是否正确
+	}
 
-	imshow("allJiaban", src);
-	imshow("result", result);
-};
+	vector<Point3f> objP;//将世界坐标放进数组
+	for (int i = 0; i < 4; i++) {
+		Point3f temp(newPs[i].x,newPs[i].y, 0);
+		objP.push_back(temp);
+		cout <<"shijie: " << objP[i] << endl;
+	}
+	//这部分是求解pnp
+	Mat rvecs = Mat::zeros(3, 1, CV_64FC1);//旋转向量
+	Mat tvecs = Mat::zeros(3, 1, CV_64FC1);//平移向量
+	solvePnP(objP,Ps,CameraMatrix,JibianMatrix,rvecs,tvecs);//求解pnp
+	Mat rotM = Mat::eye(3, 3, CV_64F);//旋转矩阵
+	Mat rotT = Mat::eye(3, 3, CV_64F);//平移矩阵
+
+	//将旋转向量变换成旋转矩阵，平移也一样  //旋转角度不用算
+	//Rodrigues(rvecs, rotM); 
+	//Rodrigues(tvecs, rotT);
+	//计算深度  //
+	Mat P;
+	P = (rotM.t()) * tvecs;
+	//将深度输出
+	cout <<"diastance is:" << P.at<double>(2, 0) << "cm" << endl;
+}
