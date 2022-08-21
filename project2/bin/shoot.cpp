@@ -15,14 +15,14 @@ Mat JibianMatrix = Mat(1, 5, CV_32FC1, JIbianJUzhen);//»û±ä²ÎÊı
 
 // »æÖÆĞı×ª¾ØĞÎ 
 
-void CheckJiaban::Drawrotedrec(Mat&src, RotatedRect& rotatedrect, const Scalar& color, int thickness)
+void CheckJiaban::Drawrotedrec(Mat& src, RotatedRect& rotatedrect, const Scalar& color, int thickness)
 {
 	// ÌáÈ¡Ğı×ª¾ØĞÎµÄËÄ¸ö½Çµã
 	Point2f points[4];
 	rotatedrect.points(points);
 
 	// ¹¹½¨ÂÖÀª
-	vector<vector<Point>>Contours;    
+	vector<vector<Point>>Contours;
 	vector<Point> contours;
 	for (int i = 0; i != 4; ++i) {
 		contours.push_back(Point2i(points[i]));
@@ -45,7 +45,7 @@ Mat CheckJiaban::jiaozheng(Mat& image) {
 	// Mat newCameraMatrix = Mat(3, 3, CV_32FC1);
 	/*Mat map1;
 	Mat map2;*/
-	
+
 	/*initUndistortRectifyMap(CameraMatrix, JibianMatrix, newCameraMatrix,Size(1280,1024), CV_32FC1,map1,map2);
 	remap(image, dst, map1, map2, INTER_LINEAR);*///Ğı×ª¾ØÕóRÎ´Öª
 
@@ -59,7 +59,7 @@ Mat CheckJiaban::jiaozheng(Mat& image) {
 
 //½«Í¼Æ¬½øĞĞÔ¤´¦Àí£¬µÃµ½¶şÖµ»¯Í¼Æ¬
 Mat CheckJiaban::chuli(Mat& image) {
-	Mat imgGray, imgRed,imgThre,imgBi,imgDil;
+	Mat imgGray, imgRed, imgThre, imgBi, imgDil;
 	//cvtColor(image, imgGray, COLOR_BGR2GRAY);
 	vector<Mat> mv(3);
 	split(image, mv);//Í¨µÀ·ÖÀë
@@ -71,19 +71,19 @@ Mat CheckJiaban::chuli(Mat& image) {
 	mv[0] = 0, mv[1] = 0;
 	merge(mv, imgRed);//ºÏ²¢µÃµ½ºìµÄ²¿·Ö
 	cvtColor(imgRed, imgGray, COLOR_BGR2GRAY);//×ªÎª»Ò¶È
-	threshold(imgGray, imgThre, 50, 255,THRESH_BINARY);//¶şÖµ»¯
+	threshold(imgGray, imgThre, 50, 255, THRESH_BINARY);//¶şÖµ»¯
 	Mat kernel2 = getStructuringElement(MORPH_RECT, Size(3, 3));
 	dilate(imgThre, imgDil, kernel2);//½øĞĞÅòÕÍ
 	//Mat kernel1 = getStructuringElement(MORPH_RECT, Size(3, 3));
 	//morphologyEx(imgDil, imgBi, MORPH_TOPHAT, kernel1);//È¥³ıÔÓ´øµã
 	//imshow("red", imgRed);//½ö½öÎªÁËµ÷ÊÔ¿ÉÒÔÏÔÊ¾
 	//namedWindow("thre", 0);
-	imshow("thre", imgDil);
+	//imshow("thre", imgDil);
 	return imgDil;
 }
 
 //ÕÒµ½µÆÌõ£¬²¢½«Æä»­³ö  £¬·µ»ØµÆÌõµÄ×îĞ¡¾ØĞÎ
-vector<RotatedRect> CheckJiaban::findLight(Mat& image,Mat&src) {
+vector<RotatedRect> CheckJiaban::findLight(Mat& image, Mat& src) {
 	vector<vector<Point>> contours;//ÂÖÀªµÄµã¼¯
 	findContours(image, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);//½«ÂÖÀªÕÒ³ö
 	//drawContours(src, contours, -1, Scalar(0, 255, 0));
@@ -92,10 +92,10 @@ vector<RotatedRect> CheckJiaban::findLight(Mat& image,Mat&src) {
 	for (int i = 0; i < contours.size(); i++) {
 		float peri = arcLength(contours[i], true);
 		approxPolyDP(contours[i], conploy[i], peri * 0.02, true);//ÄâºÏ
-		Rect re= boundingRect(contours[i]);
+		Rect re = boundingRect(contours[i]);
 		double w = re.width;
 		double h = re.height;
-		double bili=h/w;
+		double bili = h / w;
 		if (bili > 2.5) {//ÒòÎªµÆÌõ³¤¿í±È×îÉÙÒ²ÊÇ2.54
 			minrec.push_back(minAreaRect(contours[i]));//½«×îĞ¡¾ØĞÎ´«Èë
 		}
@@ -103,24 +103,24 @@ vector<RotatedRect> CheckJiaban::findLight(Mat& image,Mat&src) {
 	//rectangle(src, Re[0], Scalar(0, 0, 255));
 	//vector<Rect>re(Re.size());
 	vector<RotatedRect> Minrec;//Âú×ãÌõ¼şµÄ×îĞ¡¾ØĞÎ
-	for (int i = 0; i <minrec.size(); i++) {
-		Size2f tempwh= minrec[i].size;
+	for (int i = 0; i < minrec.size(); i++) {
+		Size2f tempwh = minrec[i].size;
 		double w = tempwh.width;
 		double h = tempwh.height;
-		double bili1 = h/w;//ÕâÊÇÓ¦ÎªËüµÄ³¤¿íÌáÈ¡ÊÇÓĞË³Ğò£¬ËùÒÔ³¤¿í±ÈÓë¿í³¤±ÈÊÇÓĞ¹²Í¨ĞÔµÄ
-		double bili2 = w/h;
-		if (bili1 >2.5||bili2>2.5) {//
-			Drawrotedrec(src, minrec[i], Scalar(0, 0, 255),1);
+		double bili1 = h / w;//ÕâÊÇÓ¦ÎªËüµÄ³¤¿íÌáÈ¡ÊÇÓĞË³Ğò£¬ËùÒÔ³¤¿í±ÈÓë¿í³¤±ÈÊÇÓĞ¹²Í¨ĞÔµÄ
+		double bili2 = w / h;
+		if (bili1 > 2.5 || bili2 > 2.5) {//
+			//Drawrotedrec(src, minrec[i], Scalar(0, 0, 255), 1);
 			//(src, minrec[i], Scalar(0, 0, 255));
 			Minrec.push_back(minrec[i]);//Âú×ãÌõ¼şµÄ¾ØĞÎ·ÅÈë
 		}
 	}
-	imshow("dad", src);//µ÷ÊÔÓÃµÄ
-	return Minrec;	
+	//imshow("dad", src);//µ÷ÊÔÓÃµÄ
+	return Minrec;
 }
 
 //½«¼×°åµÄ¾ØĞÎÕÒ³ö
-vector<vec2RotatedRect> CheckJiaban::findJiban(vector<RotatedRect>& light,Mat&src) {
+RotatedRect CheckJiaban::findJiban(vector<RotatedRect>& light, Mat& src) {
 	Mat result = src.clone();
 	if (light.size() == 0) {
 		cout << "ÎŞ·¨Ê¶±ğ¼×°å" << endl;
@@ -128,30 +128,21 @@ vector<vec2RotatedRect> CheckJiaban::findJiban(vector<RotatedRect>& light,Mat&sr
 	//
 	vector<vec2RotatedRect>mubiao;//±È½ÏÁĞ±í
 	for (int i = 0; i < light.size(); i++) {//Ò»¸ö´ÓÍ·ÕÒ£¬ÁíÍâÒ»¸ö·´·½ÏòÕÒ
-		for (int j=light.size() - 1; j>i; j--) {
+		for (int j = light.size() - 1; j > i; j--) {
 			float temp = light[i].angle / light[j].angle;
 			if (temp > 0.9 && temp < 1.1) {//±È½Ï¾ØĞÎµÄĞı×ª½Ç¶È£¬¾«¶ÈÖ»ÄÜÊÔ×ÅÀ´
-				vec2RotatedRect	pipei(light[i],light[j]);
+				vec2RotatedRect	pipei(light[i], light[j]);
 				mubiao.push_back(pipei);
 			}
 		}
 	}
-	//for (int i = 0; i < mubiao.size(); i++) {
-	//	DrawRotatedRect(src, mubiao[i].arr[0], Scalar(0, 0, 255), 1, 8);//½«ÒÑÆ¥ÅäµÄ»­³öÀ´
-	//	DrawRotatedRect(src, mubiao[i].arr[1], Scalar(0, 0, 255), 1, 8);
-	//	/*Point2f center = (mubiao[i].arr[0].center + mubiao[i].arr[1].center)/2;*/
-	//	//line(src, mubiao[i].arr[0].center, mubiao[i].arr[1].center, Scalar(255, 0, 255), 2);
-
-	//	/*string str = "check_" + to_string(i);
-	//	putText(src,str,)*/
-	//}
 
 	vector<double>area;
 	vector<vector<Point2i>> heti(mubiao.size());
 	vector<RotatedRect>roatedrects(mubiao.size());
 	for (int i = 0; i < mubiao.size(); i++) {
 
-		
+
 		Point2f ps1[4];//½«8¸öµãºÏÌå
 
 		//ÏÈÊÇ4¸ö
@@ -164,26 +155,25 @@ vector<vec2RotatedRect> CheckJiaban::findJiban(vector<RotatedRect>& light,Mat&sr
 		for (int j = 0; j < 4; j++) {
 			heti[i].push_back(ps2[j]);
 		}
-		
+
 		roatedrects[i] = minAreaRect(heti[i]);//¶ÔÒÑ¾­Æ¥Åä³É¹¦µÄµÆÌõ»­³öËûÃÇµÄ¾ØĞÎ
-		Drawrotedrec(src, roatedrects[i], Scalar(0, 255, 0),2);//»­³öÒÑ¼ì²âµÄ¼×°å
-		double area_temp = roatedrects[i].size.width* roatedrects[i].size.height;
+		Drawrotedrec(src, roatedrects[i], Scalar(0, 255, 0), 2);//»­³öÒÑ¼ì²âµÄ¼×°å
+		double area_temp = roatedrects[i].size.width * roatedrects[i].size.height;
 		area.push_back(area_temp);//ÒòÎª°ÑÃæ»ı×÷Îª±È½ÏµÄÒòËØ£¬°ÑÃæ»ı´¢´æ
 	}
 	int maxPosition = max_element(area.begin(), area.end()) - area.begin();
 	//Ãæ»ı×î´óµÄ×°¼×°å±»¼ì²âµ½
-	Drawrotedrec(result, roatedrects[maxPosition], Scalar(0, 0, 255), 2);//»­³öÄ¿±ê¾ØĞÎ
-	imshow("allJiaban", src);//ÕâÁ½¸öÏÔÊ¾ÎªÁË½«²»Í¬µÄÇø·Ö¿ªÀ´
-	imshow("result", result);
-	return mubiao;
+	Drawrotedrec(src, roatedrects[maxPosition], Scalar(0, 0, 255), 2);//»­³öÄ¿±ê¾ØĞÎ
+	//imshow("allJiaban", src);//ÕâÁ½¸öÏÔÊ¾ÎªÁË½«²»Í¬µÄÇø·Ö¿ªÀ´
+	//imshow("result", result);
+	return roatedrects[maxPosition];
 };
-
-void CheckJiaban::zuobiao(RotatedRect& light) {//Ó¦¸ÃÑ¡ÔñÒÑ¾­Æ¥Åä³É¹¦µÄÒ»¸öµÆÌõ×÷ÎªÏà»ú×ø±ê×ªÎªÊÀ½ç×ø±êµÄÄ£°å£¬Òª²»È»£¬¿ÉÄÜ²»ÊÇµÆÌõ
-	//Ö÷ÒªÊÇ¶ÔµÆÌõµÄËÄ¸öµã×÷Îª¼ì²â£¬ÕâÑù¾Í²»ÓÃ½Çµã¼ì²â£¬
-	//ÓÃµÆÌõµÄ³ß´ç×÷Îª×ªÎªÊÀ½ç×ø±êµÄÒÀ¾İ
+void CheckJiaban::zuobiao(RotatedRect& jiaban,Mat&src) {//Ó¦¸ÃÑ¡ÔñÒÑ¾­Æ¥Åä³É¹¦µÄÒ»¸öµÆÌõ×÷ÎªÏà»ú×ø±ê×ªÎªÊÀ½ç×ø±êµÄÄ£°å£¬Òª²»È»£¬¿ÉÄÜ²»ÊÇµÆÌõ
+	//Ö÷ÒªÊÇ¼×°åµÄËÄ¸öµã×÷Îª¼ì²â£¬ÕâÑù¾Í²»ÓÃ½Çµã¼ì²â£¬
+	//ÓÃ¼×°åµÄ³ß´ç×÷Îª×ªÎªÊÀ½ç×ø±êµÄÒÀ¾İ
 	Point2f ps[4];
 	vector<Point2f>Ps;//Õâ¸öÎªÁËpnp²â¾àµÄÊ±ºòÓÃµÄ£¬¸úpsÒ»ÑùµÄ
-	light.points(ps);//½«ËÄ¸öµãÈ¡ÏÂ
+	jiaban.points(ps);//½«ËÄ¸öµãÈ¡ÏÂ
 	Point2f pmin=ps[0];//ÕÒµ½×î¸ßµÄµã
 	float maxDistance = 0;
 	//ÕÒµ½×î¸ßµÄµã£¬ºÍ×î³¤µÄ±ß
@@ -192,13 +182,14 @@ void CheckJiaban::zuobiao(RotatedRect& light) {//Ó¦¸ÃÑ¡ÔñÒÑ¾­Æ¥Åä³É¹¦µÄÒ»¸öµÆÌõ×
 		if (ps[i].y < pmin.y) {
 			pmin = ps[i];
 		}
-		cout << ps[i] << endl;//½ö½öÎªÁËÏÔÊ¾Ñ¡ÔñµÄµãÊÇ·ñÕıÈ·
+		//cout << ps[i] << endl;//½ö½öÎªÁËÏÔÊ¾Ñ¡ÔñµÄµãÊÇ·ñÕıÈ·
 		int j = i + 1;
 		if (j == 4) {
 			break;
 		}
 		else {
 			float temp = distance(ps[i], ps[j]);
+			//cout <<"ËÄ¸öµãµÄ³¤¶È£º " << temp << endl;
 			if (temp > maxDistance) {
 				maxDistance = temp;
 			}
@@ -206,19 +197,22 @@ void CheckJiaban::zuobiao(RotatedRect& light) {//Ó¦¸ÃÑ¡ÔñÒÑ¾­Æ¥Åä³É¹¦µÄÒ»¸öµÆÌõ×
 		}
 	}
 	
-	cout <<"max is: " << pmin << endl;//½ö½öÎªÁËÏÔÊ¾Ñ¡ÔñµÄµãÊÇ·ñÕıÈ·
+	//cout <<"max is: " << pmin << endl;//½ö½öÎªÁËÏÔÊ¾Ñ¡ÔñµÄµãÊÇ·ñÕıÈ·
 	Point2f newPs[4];//ÕÒµ½ÊÀ½ç×ø±ê
 	float biliChi =14/maxDistance;//ÏñËØ¾àÀëÓëÊµ¼ÊµÄ±ÈÀı³ß
 	for (int i = 0; i < 4; i++) {
 		newPs[i] = (ps[i] - pmin)*biliChi;//½«×î¸ßµÄµã×÷ÎªÔ­µã£¬Ö®ºóÔÙ°´±ÈÀı×ª»»
-		cout << newPs[i] << endl;//½ö½öÎªÁËÏÔÊ¾Ñ¡ÔñµÄµãÊÇ·ñÕıÈ·
+		//cout << newPs[i] << endl;//½ö½öÎªÁËÏÔÊ¾Ñ¡ÔñµÄµãÊÇ·ñÕıÈ·
 	}
+	
+	//cout <<"µ÷Õûºó" << distance(newPs[0], newPs[1]) << endl;½öÎªÁËÏÔÊ¾
+	//cout<<"µ÷Õûºó"<< distance(newPs[2], newPs[1]) << endl;
 
 	vector<Point3f> objP;//½«ÊÀ½ç×ø±ê·Å½øÊı×é
 	for (int i = 0; i < 4; i++) {
 		Point3f temp(newPs[i].x,newPs[i].y, 0);
 		objP.push_back(temp);
-		cout <<"shijie: " << objP[i] << endl;
+		//cout <<"shijie: " << objP[i] << endl;
 	}
 	//Õâ²¿·ÖÊÇÇó½âpnp
 	Mat rvecs = Mat::zeros(3, 1, CV_64FC1);//Ğı×ªÏòÁ¿
@@ -234,5 +228,8 @@ void CheckJiaban::zuobiao(RotatedRect& light) {//Ó¦¸ÃÑ¡ÔñÒÑ¾­Æ¥Åä³É¹¦µÄÒ»¸öµÆÌõ×
 	Mat P;
 	P = (rotM.t()) * tvecs;
 	//½«Éî¶ÈÊä³ö
+	cout << P << endl;
 	cout <<"diastance is:" << P.at<double>(2, 0) << "cm" << endl;
+	string str = to_string(P.at<double>(2, 0)) + "cm";
+	putText(src, str, jiaban.center, FONT_HERSHEY_COMPLEX, 0.5, Scalar(0, 255, 255));
 }

@@ -27,6 +27,6 @@ public:
 	Mat jiaozheng(Mat& image);
 	Mat chuli(Mat& image);
 	vector<RotatedRect> findLight(Mat&image,Mat&src);
-	vector<vec2RotatedRect>findJiban(vector<RotatedRect>&light, Mat& src);
-	void zuobiao(RotatedRect& light);
+	RotatedRect findJiban(vector<RotatedRect>&light, Mat& src);
+	void zuobiao(RotatedRect& light, Mat& src);
 };
