@@ -17,13 +17,12 @@ public:
 	//这样就可以只有两个灯条的类了
 	//但是不知道为什么不可以初始化为长度2
 };
-//方案二 //方案二又报错好奇怪
-//typedef Vec<RotatedRect, 2>vec2RotatedRect;
 
 
 class CheckJiaban {
 public:
 	void Drawrotedrec(Mat& src, RotatedRect& rotatedrect, const Scalar& color, int thickness);
+	float distance(const cv::Point2f& a, const cv::Point2f& b);
 	Mat jiaozheng(Mat& image);
 	Mat chuli(Mat& image);
 	vector<RotatedRect> findLight(Mat&image,Mat&src);
