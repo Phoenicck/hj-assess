@@ -24,7 +24,7 @@ int main() {
 		imshow("result", src);
 		string path2="output/"+to_string(i) + ".jpg";
 		imwrite(path2, src);
-		waitKey(1000);//一秒更新一次
+		waitKey(500);//一秒更新一次
 	}
 
 

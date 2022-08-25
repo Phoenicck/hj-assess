@@ -72,6 +72,7 @@ Mat CheckJiaban::chuli(Mat& image) {
 	Mat kernel2 = getStructuringElement(MORPH_RECT, Size(3, 3));
 	dilate(imgThre, imgDil, kernel2);//进行膨胀
 	//imshow("thre", imgDil);
+	//waitKey(0);
 	return imgDil;
 }
 // 这是查找灯条
@@ -92,9 +93,10 @@ vector<RotatedRect> CheckJiaban::findLight(Mat& image, Mat& src) {
 		double wh_bili = b / a;
 		if (wh_bili < 3) continue;//长宽比太小就继续
 		minrec.push_back(minAreaRect(contours[i]));//将最小矩形传入
+		//cout << (minAreaRect(contours[i])).angle << endl;
 		//Drawrotedrec(src, light_minrec, Scalar(255, 0, 255), 1);//调试用的，查看灯条
 	}
-
+	//cout << "up" << endl;
 	//imshow("dad", src);//调试用的
 	//waitKey(0);
 	return minrec;
@@ -114,12 +116,15 @@ RotatedRect CheckJiaban::findJiban(vector<RotatedRect>& light, Mat& src) {
 			//通过旋转角度的差值  和y方向的差距进行选择
 			float angle_gap = abs(light[i].angle - light[j].angle);
 			float y_gap = abs(light[i].center.y - light[j].center.y);
-			if (angle_gap < 5 || angle_gap>85) {
-				if (y_gap < 50) {
+			if (angle_gap < 5|| angle_gap>85) {
+				if (y_gap < 70) {
 					vec2RotatedRect	pipei(light[i], light[j]);
 					mubiao.push_back(pipei);
 					//成功找到灯条就画出来
+					//cout << light[i].angle << endl;
+					//cout << light[j] .angle << endl;
 					//Drawrotedrec(src, light[i], Scalar(255, 0, 255), 1);
+					//Drawrotedrec(src, light[j], Scalar(0, 0, 255), 1);
 				}
 			}
 		}
@@ -145,9 +150,11 @@ RotatedRect CheckJiaban::findJiban(vector<RotatedRect>& light, Mat& src) {
 		}
 		//对已经匹配成功的灯条画出他们的矩形
 		roatedrects[i] = minAreaRect(heti[i]);
-		float bili1 = roatedrects[i].size.width / roatedrects[i].size.height;
-
-		if (bili1 < 3) {
+		RotatedRect temp = fitEllipse(heti[i]);
+		float bili = temp.size.height / temp.size.width;
+		//float bili1 = roatedrects[i].size.width / roatedrects[i].size.height;
+		//cout <<"bili: " << bili << endl;
+		if (bili <4) {
 			Drawrotedrec(src, roatedrects[i], Scalar(0, 255, 0), 2);//画出已检测的甲板
 			double area_temp = roatedrects[i].size.width * roatedrects[i].size.height;
 			area.push_back(area_temp);//因为把面积作为比较的因素，把面积储存
